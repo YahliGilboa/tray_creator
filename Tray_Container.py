@@ -35,6 +35,9 @@ class Tray_Container(Rectangle):
                 else:
                     return {'small_side':small_side_cells,'big_side':big_side_cells}
 
+    def add_hole(self):
+
+
     # def generate_matrix_from_width_height(self,width,height):
     #     return [[Tray_Cell()] * int(width)] * int(height)
 
