@@ -9,7 +9,7 @@ class TrayContainer():
     X_Cells = 0
     Y_Cells = 0
 
-    def __init__(self, width_in_mm, length_in_mm,height_in_mm=conf.DEFAULT_TRAY_HEIGHT_MM):
+    def __init__(self, width_in_mm, length_in_mm, height_in_mm=conf.DEFAULT_TRAY_HEIGHT_MM):
         self.width_in_mm = width_in_mm
         self.length_in_mm = length_in_mm
         self.height_in_mm = height_in_mm
@@ -18,15 +18,15 @@ class TrayContainer():
     def calculate_cell_matrix(self, width_in_mm, length_in_mm):
         if self.width_in_mm <= self.length_in_mm:
             width_length_tuple = self.calclate_correct_cell_amount(conf.MIN_SMALL_SIDE_CELL_AMOUNT,
-                                                                  length_in_mm / width_in_mm)
+                                                                   length_in_mm / width_in_mm)
             x_cells = int(width_length_tuple[0])
             y_cells = int(width_length_tuple[1])
             return x_cells, y_cells
         else:
             width_length_tuple = self.calclate_correct_cell_amount(conf.MIN_SMALL_SIDE_CELL_AMOUNT,
-                                                                  width_in_mm / length_in_mm)
+                                                                   width_in_mm / length_in_mm)
             x_cells = int(width_length_tuple[0])
-            y_cells= int(width_length_tuple[1])
+            y_cells = int(width_length_tuple[1])
             return x_cells, y_cells
 
     def calclate_correct_cell_amount(self, min_small_side_cells, big_to_small_ratio):

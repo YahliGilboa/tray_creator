@@ -1,0 +1,24 @@
+this is my idea:
+cadquery is based on relative coords. meaning i can use a function called ".center" to define a new coords
+to create objects from. EX:
+
+    result = cq.Workplane("front").circle(
+        3.0
+    )  # current point is the center of the circle, at (0, 0)
+    result = result.center(1.5, 0.0).rect(0.5, 0.5)  # new work center is (1.5, 0.0)
+
+    result = result.center(-1.5, 1.5).circle(0.25)  # new work center is (0.0, 1.5).
+    # The new center is specified relative to the previous center, not global coordinates!
+
+    result = result.extrude(0.25)
+
+so what i can do (i think its the best approach):
+i create the rect. then I save a "global center" as the topleft corner of the rect (.center(-width,-height))
+SEE :https://cadquery.readthedocs.io/en/latest/examples.html#examples
+
+then i go and calculate for each tray hole the coords it should land on:
+what i will get from "tray creator" will be the coords on the rect without wall thickness- meaning a completly holed
+region. then the x and y coords will be:
+(wall_thickness/2+ x, -(wall_thickness/2 + y)
+iterate over all cell holes and extrude up to "wall_thickness" (height-wall_thickness)
+then i fillet all edges equally. skadoosh
