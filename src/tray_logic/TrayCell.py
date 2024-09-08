@@ -1,6 +1,5 @@
-from Rectangle import Rectangle
 
-class Tray_Cell():
+class TrayCell():
     def __init__(self):
         self.is_occupied = False
 

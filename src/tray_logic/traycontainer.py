@@ -1,35 +1,33 @@
-from Rectangle import Rectangle
-from Tray_Cell import Tray_Cell
-import math
-import conf
-from Tray_Cell import Tray_Cell
+# from TrayCell import TrayCell
+# import math
+import src.tray_logic.conf as conf
 
 
-class Tray_Container(Rectangle):
+class TrayContainer():
     # this is cell clumps, but ill call it hole because this will generate it
     tray_holes = []
     X_Cells = 0
     Y_Cells = 0
 
-    def __init__(self, width_in_mm, length_in_mm):
-        super().__init__(width_in_mm, length_in_mm)
+    def __init__(self, width_in_mm, length_in_mm,height_in_mm=conf.DEFAULT_TRAY_HEIGHT_MM):
         self.width_in_mm = width_in_mm
         self.length_in_mm = length_in_mm
+        self.height_in_mm = height_in_mm
         self.X_Cells, self.Y_Cells = self.calculate_cell_matrix(width_in_mm, length_in_mm)
 
     def calculate_cell_matrix(self, width_in_mm, length_in_mm):
-        if self.width <= self.length:
-            width_length_dict = self.calclate_correct_cell_amount(conf.MIN_SMALL_SIDE_CELL_AMOUNT,
+        if self.width_in_mm <= self.length_in_mm:
+            width_length_tuple = self.calclate_correct_cell_amount(conf.MIN_SMALL_SIDE_CELL_AMOUNT,
                                                                   length_in_mm / width_in_mm)
-            width_in_mm = int(width_length_dict[0])
-            length_in_mm = int(width_length_dict[1])
-            return width_in_mm, length_in_mm
+            x_cells = int(width_length_tuple[0])
+            y_cells = int(width_length_tuple[1])
+            return x_cells, y_cells
         else:
-            width_length_dict = self.calclate_correct_cell_amount(conf.MIN_SMALL_SIDE_CELL_AMOUNT,
+            width_length_tuple = self.calclate_correct_cell_amount(conf.MIN_SMALL_SIDE_CELL_AMOUNT,
                                                                   width_in_mm / length_in_mm)
-            length_in_mm = int(width_length_dict[0])
-            width_in_mm = int(width_length_dict[1])
-            return width_in_mm, length_in_mm
+            x_cells = int(width_length_tuple[0])
+            y_cells= int(width_length_tuple[1])
+            return x_cells, y_cells
 
     def calclate_correct_cell_amount(self, min_small_side_cells, big_to_small_ratio):
         small_side_cells = min_small_side_cells
