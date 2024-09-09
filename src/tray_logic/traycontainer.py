@@ -54,7 +54,6 @@ class TrayContainer():
 
             if x_overlap and y_overlap:
                 tray_hole_intersect = True
-
         return tray_hole_intersect
 
     # def generate_matrix_from_width_height(self,width,height):
