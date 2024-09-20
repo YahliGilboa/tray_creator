@@ -1,4 +1,4 @@
-from TrayHole import TrayHole
+from src.tray_logic.TrayHole import TrayHole
 import src.tray_logic.conf as conf
 
 
@@ -42,17 +42,19 @@ class TrayContainer():
     def add_hole(self, tray_hole: TrayHole):
         if not self.tray_hole_intersect_existing(tray_hole):
             self.tray_holes.append(tray_hole)
+        else:
+            raise Exception("cant create two intersecting holes")
 
-    def tray_hole_intersect_existing(self, tray_hole: TrayHole) -> bool:
+    def tray_hole_intersect_existing(self, new_tray_hole: TrayHole) -> bool:
         tray_hole_intersect = False
         for hole in self.tray_holes:
-            x_overlap = tray_hole.top_left_index_pos[0] >= hole.top_left_index_pos[0] or \
-                        tray_hole.bottom_right_index_pos[0] <= hole.bottom_right_index_pos[0]
+            x_not_intersect = new_tray_hole.top_left_index_pos.XIndexPos > hole.bottom_right_index_pos.XIndexPos or \
+                new_tray_hole.bottom_right_index_pos.XIndexPos < hole.top_left_index_pos.XIndexPos
 
-            y_overlap = tray_hole.top_left_index_pos[1] >= hole.top_left_index_pos[1] or \
-                        tray_hole.bottom_right_index_pos[1] <= hole.bottom_right_index_pos[1]
+            y_not_intersect = new_tray_hole.top_left_index_pos.YIndexPos > hole.bottom_right_index_pos.YIndexPos or \
+                new_tray_hole.bottom_right_index_pos.YIndexPos < hole.top_left_index_pos.YIndexPos
 
-            if x_overlap and y_overlap:
+            if not(x_not_intersect or y_not_intersect):
                 tray_hole_intersect = True
         return tray_hole_intersect
 
