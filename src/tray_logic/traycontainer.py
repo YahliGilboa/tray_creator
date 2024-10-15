@@ -9,11 +9,13 @@ class TrayContainer():
     Y_Cells = 0
 
     def __init__(self, width_in_mm, length_in_mm, height_in_mm=conf.DEFAULT_TRAY_HEIGHT_MM,
-                 wall_thickness_in_mm=conf.DEFAULT_TRAY_WALL_THICKNESS_MM):
+                 wall_thickness_in_mm=conf.DEFAULT_TRAY_WALL_THICKNESS_MM,
+                 hole_fillet_radius_mm=conf.DEFAULT_TRAY_FILLET_RADIUS_MM):
         self.width_in_mm = width_in_mm
         self.length_in_mm = length_in_mm
         self.height_in_mm = height_in_mm
         self.wall_thickness_in_mm = wall_thickness_in_mm
+        self.hole_fillet_radius_mm = hole_fillet_radius_mm
         self.X_Cells, self.Y_Cells = self.calculate_cell_matrix(width_in_mm, length_in_mm)
 
     def calculate_cell_matrix(self, width_in_mm, length_in_mm):
@@ -49,12 +51,12 @@ class TrayContainer():
         tray_hole_intersect = False
         for hole in self.tray_holes:
             x_not_intersect = new_tray_hole.top_left_index_pos.XIndexPos > hole.bottom_right_index_pos.XIndexPos or \
-                new_tray_hole.bottom_right_index_pos.XIndexPos < hole.top_left_index_pos.XIndexPos
+                              new_tray_hole.bottom_right_index_pos.XIndexPos < hole.top_left_index_pos.XIndexPos
 
             y_not_intersect = new_tray_hole.top_left_index_pos.YIndexPos > hole.bottom_right_index_pos.YIndexPos or \
-                new_tray_hole.bottom_right_index_pos.YIndexPos < hole.top_left_index_pos.YIndexPos
+                              new_tray_hole.bottom_right_index_pos.YIndexPos < hole.top_left_index_pos.YIndexPos
 
-            if not(x_not_intersect or y_not_intersect):
+            if not (x_not_intersect or y_not_intersect):
                 tray_hole_intersect = True
         return tray_hole_intersect
 
