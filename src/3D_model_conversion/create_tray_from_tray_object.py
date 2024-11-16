@@ -12,9 +12,13 @@ def create_3Dtray_from_tray_object(tray: TrayContainer):
         .edges("|Z") \
         .fillet(calculate_outer_tray_outer_radii(tray))
 
-    print(tray_box.faces().size())
-    # tray_box = tray_box.workplane().faces('>Z').center(-tray.width_in_mm / 2, tray.length_in_mm / 2)
-    # tray_box = tray_box.box(1,1,1)
+    # this maps on the top face and creates a rect - need to figure out how to create a hole
+    #  and extrude it up to the right dimension. ofc in a loop.
+    # maybe save correct center before the loop and map to the right hole in each iteration in relation to the center?
+    new_workplane = cq.Workplane("XY").transformed(offset=(0, 0, tray_height / 2))
+    new_workplane_correct_center = new_workplane.center(-tray_width / 2, tray_length / 2)
+    new_workplane_correct_center.box(10, 10, 10)
+
     return tray_box
 
 
