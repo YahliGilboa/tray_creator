@@ -3,12 +3,13 @@ from src.tray_logic.traycontainer import TrayContainer
 from src.tray_logic.TrayHole import TrayHole
 
 
-class trayToModel():
+class trayToModelConverter():
     single_cell_span: float
 
     def __init__(self, tray_container: TrayContainer):
         self.tray_container = tray_container
         self.single_cell_span_mm = tray_container.width_in_mm / tray_container.X_Cells
+        self.outer_radii = self.tray_container.holes_fillet_radius_mm + self.tray_container.wall_thickness_in_mm
 
     def get_tray_hole_size_dimensions_mm(self, tray_hole: TrayHole):
         tray_hole_span_width = self.single_cell_span_mm * tray_hole.x_cells_span
@@ -17,9 +18,6 @@ class trayToModel():
         reduced_y_size = tray_hole_span_length - 2 * self.tray_container.wall_thickness_in_mm
 
         return reduced_x_size, reduced_y_size
-
-    def calculate_outer_tray_outer_radii(self):
-        return self.tray_container.holes_fillet_radius_mm + self.tray_container.wall_thickness_in_mm
 
     # + on X and - on y because of how the axis are arranged
     def calculate_topleft_pos_mm(self, tray_hole: TrayHole) -> tuple:
@@ -32,7 +30,7 @@ class trayToModel():
         tray_model = cq.Workplane("XY") \
             .box(self.tray_container.width_in_mm, self.tray_container.length_in_mm, self.tray_container.height_in_mm) \
             .edges("|Z") \
-            .fillet(self.calculate_outer_tray_outer_radii(self.tray_container))
+            .fillet(self.outer_radii)
 
         topleft_workplane = cq.Workplane("XY") \
             .transformed(offset=(0, 0, self.tray_container.height_in_mm / 2)) \
@@ -42,9 +40,13 @@ class trayToModel():
             new_rect = topleft_workplane \
                 .rect(*self.get_tray_hole_size_dimensions_mm(tray_hole),
                       centered=False) \
-                .fillet(self.tray_container.holes_fillet_radius_mm) \
-                .translate((*self.calculate_topleft_pos_mm(self.tray_container, tray_hole), 0)) \
-                .extrude(-(self.tray_container.height_in_mm - self.tray_container.wall_thickness_in_mm))
+                .translate((*self.calculate_topleft_pos_mm(tray_hole), 0)) \
+                .extrude((self.tray_container.height_in_mm - self.tray_container.wall_thickness_in_mm))
+
+            print(*self.get_tray_hole_size_dimensions_mm(tray_hole))
+            print(*self.calculate_topleft_pos_mm(tray_hole))
+            print(self.tray_container.height_in_mm - self.tray_container.wall_thickness_in_mm)
+
             tray_model = tray_model.cut(new_rect)
 
         return tray_model
