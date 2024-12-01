@@ -14,7 +14,7 @@ class TrayContainer():
         self.length_in_mm: float = length_in_mm
         self.height_in_mm: float = height_in_mm
         self.wall_thickness_in_mm: float = wall_thickness_in_mm
-        self.tray_hole_fillet_radius_mm: float = tray_hole_fillet_radius_mm
+        self.holes_fillet_radius_mm: float = tray_hole_fillet_radius_mm
         self.X_Cells, self.Y_Cells = self.calculate_cell_matrix(width_in_mm, length_in_mm)
 
     def calculate_cell_matrix(self, width_in_mm: float, length_in_mm: float):
@@ -58,11 +58,6 @@ class TrayContainer():
             if not (x_not_intersect or y_not_intersect):
                 tray_hole_intersect = True
         return tray_hole_intersect
-
-    def get_tray_hole_dimensions_mm(self, tray_hole: TrayHole) -> tuple:
-        tray_hole_width = self.cell_size_mm * tray_hole.x_cell_span
-        tray_hole_length = self.cell_size_mm * tray_hole.y_cell_span
-        return tray_hole_width, tray_hole_length
 
 # def generate_matrix_from_width_height(self,width,height):
 #     return [[Tray_Cell()] * int(width)] * int(height)
