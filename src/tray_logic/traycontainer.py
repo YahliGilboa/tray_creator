@@ -27,8 +27,9 @@ class TrayContainer():
         else:
             width_and_length = self.calclate_correct_cell_amount(conf.MIN_SMALL_SIDE_CELL_AMOUNT,
                                                                  width_in_mm / length_in_mm)
-            x_cells = int(width_and_length[0])
-            y_cells = int(width_and_length[1])
+            x_cells = int(width_and_length[1])
+            y_cells = int(width_and_length[0])
+
             return x_cells, y_cells
 
     def calclate_correct_cell_amount(self, min_small_side_cells: int, big_to_small_ratio: int) -> int:
@@ -58,6 +59,3 @@ class TrayContainer():
             if not (x_not_intersect or y_not_intersect):
                 tray_hole_intersect = True
         return tray_hole_intersect
-
-# def generate_matrix_from_width_height(self,width,height):
-#     return [[Tray_Cell()] * int(width)] * int(height)
