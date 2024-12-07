@@ -8,17 +8,17 @@ class TrayContainer():
     Y_Cells: int
 
     def __init__(self, width_in_mm: float, length_in_mm: float, height_in_mm: float = conf.DEFAULT_TRAY_HEIGHT_MM,
-                 wall_thickness_in_mm: float = conf.DEFAULT_TRAY_WALL_THICKNESS_MM,
+                 wall_thickness_in_mm: float = conf.DEFAULT_TRAY_HALF_WALL_THICKNESS_MM,
                  tray_hole_fillet_radius_mm: float = conf.DEFAULT_TRAY_FILLET_RADIUS_MM):
-        self.width_in_mm: float = width_in_mm
-        self.length_in_mm: float = length_in_mm
-        self.height_in_mm: float = height_in_mm
-        self.wall_thickness_in_mm: float = wall_thickness_in_mm
+        self.width_mm: float = width_in_mm
+        self.length_mm: float = length_in_mm
+        self.height_mm: float = height_in_mm
+        self.half_wall_thickness_mm: float = wall_thickness_in_mm
         self.holes_fillet_radius_mm: float = tray_hole_fillet_radius_mm
         self.X_Cells, self.Y_Cells = self.calculate_cell_matrix(width_in_mm, length_in_mm)
 
     def calculate_cell_matrix(self, width_in_mm: float, length_in_mm: float):
-        if self.width_in_mm <= self.length_in_mm:
+        if self.width_mm <= self.length_mm:
             width_and_length = self.calclate_correct_cell_amount(conf.MIN_SMALL_SIDE_CELL_AMOUNT,
                                                                  length_in_mm / width_in_mm)
             x_cells = int(width_and_length[0])
