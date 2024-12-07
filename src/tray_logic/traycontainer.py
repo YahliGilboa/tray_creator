@@ -42,10 +42,28 @@ class TrayContainer():
                 return small_side_cells, big_side_cells
 
     def add_hole(self, tray_hole: TrayHole):
-        if not self.hole_intersects_existing_hole(tray_hole):
-            self.tray_holes.append(tray_hole)
-        else:
+        if self.hole_intersects_existing_hole(tray_hole):
             raise Exception("cant create two intersecting holes")
+
+        if self.hole_out_of_bounds(tray_hole):
+            raise Exception("cant create hole out of bounds")
+
+        self.tray_holes.append(tray_hole)
+
+    def hole_out_of_bounds(self, tray_hole: TrayHole) -> bool:
+        if tray_hole.top_left_index_pos.XIndexPos + 1 < self.X_Cells or tray_hole.top_left_index_pos.XIndexPos < 0:
+            return True
+
+        if tray_hole.bottom_right_index_pos.XIndexPos + 1 < self.X_Cells or tray_hole.bottom_right_index_pos.XIndexPos < 0:
+            return True
+
+        if tray_hole.top_left_index_pos.YIndexPos + 1 < self.Y_Cells or tray_hole.top_left_index_pos.YIndexPos < 0:
+            return True
+
+        if tray_hole.bottom_right_index_pos.YIndexPos + 1 < self.Y_Cells or tray_hole.bottom_right_index_pos.YIndexPos < 0:
+            return True
+
+        return False
 
     def hole_intersects_existing_hole(self, new_tray_hole: TrayHole) -> bool:
         tray_hole_intersect = False
