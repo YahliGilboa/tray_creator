@@ -51,16 +51,17 @@ class TrayContainer():
         self.tray_holes.append(tray_hole)
 
     def hole_out_of_bounds(self, tray_hole: TrayHole) -> bool:
-        if tray_hole.top_left_index_pos.XIndexPos + 1 < self.X_Cells or tray_hole.top_left_index_pos.XIndexPos < 0:
+
+        if tray_hole.top_left_index_pos.XIndexPos + 1 > self.X_Cells or tray_hole.top_left_index_pos.XIndexPos < 0:
             return True
 
-        if tray_hole.bottom_right_index_pos.XIndexPos + 1 < self.X_Cells or tray_hole.bottom_right_index_pos.XIndexPos < 0:
+        if tray_hole.bottom_right_index_pos.XIndexPos + 1 > self.X_Cells or tray_hole.bottom_right_index_pos.XIndexPos < 0:
             return True
 
-        if tray_hole.top_left_index_pos.YIndexPos + 1 < self.Y_Cells or tray_hole.top_left_index_pos.YIndexPos < 0:
+        if tray_hole.top_left_index_pos.YIndexPos + 1 > self.Y_Cells or tray_hole.top_left_index_pos.YIndexPos < 0:
             return True
 
-        if tray_hole.bottom_right_index_pos.YIndexPos + 1 < self.Y_Cells or tray_hole.bottom_right_index_pos.YIndexPos < 0:
+        if tray_hole.bottom_right_index_pos.YIndexPos + 1 > self.Y_Cells or tray_hole.bottom_right_index_pos.YIndexPos < 0:
             return True
 
         return False

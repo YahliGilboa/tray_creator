@@ -13,8 +13,8 @@ try:
     tray_object.add_hole(TrayHole(IndexPos(25, 0), IndexPos(25, 0)))
 except Exception:
     print(Exception)
-    
+
 [print(tray_hole.top_left_index_pos, tray_hole.bottom_right_index_pos) for tray_hole in tray_object.tray_holes]
 
 tray_model = trayToModelConverter(tray_object).create_model_from_tray_object()
-cq.exporters.export(tray_model, "pooped_models\\good_shit.stl")
+cq.exporters.export(tray_model, "pooped_models\\bruh.stl")
