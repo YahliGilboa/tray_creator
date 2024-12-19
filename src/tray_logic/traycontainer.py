@@ -3,10 +3,6 @@ import src.tray_logic.conf as conf
 
 
 class TrayContainer():
-    tray_holes: list[TrayHole] = []
-    X_Cells: int
-    Y_Cells: int
-
     def __init__(self, width_in_mm: float, length_in_mm: float, height_in_mm: float = conf.DEFAULT_TRAY_HEIGHT_MM,
                  wall_thickness_in_mm: float = conf.DEFAULT_TRAY_HALF_WALL_THICKNESS_MM,
                  tray_hole_fillet_radius_mm: float = conf.DEFAULT_TRAY_FILLET_RADIUS_MM):
@@ -15,6 +11,7 @@ class TrayContainer():
         self.height_mm: float = height_in_mm
         self.half_wall_thickness_mm: float = wall_thickness_in_mm
         self.holes_fillet_radius_mm: float = tray_hole_fillet_radius_mm
+        self.tray_holes: list[TrayHole] = []
         self.X_Cells, self.Y_Cells = self.calculate_cell_matrix(width_in_mm, length_in_mm)
 
     def calculate_cell_matrix(self, width_in_mm: float, length_in_mm: float):
