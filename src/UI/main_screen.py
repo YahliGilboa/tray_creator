@@ -3,7 +3,9 @@ from PySide6.QtWidgets import QApplication, QWidget, QLabel, QGridLayout, QVBoxL
 from PySide6.QtCore import Qt, QTimer, QPoint
 from PySide6.QtGui import QColor, QPalette
 import sys
+import os
 
+from tray_logic.TrayHole import TrayHole, IndexPos
 from tray_logic.traycontainer import TrayContainer
 
 CELL_SIZE = 40
@@ -81,7 +83,8 @@ class GridController(QWidget):
         self.rectangles = []
         self.bounding_boxes = []
         self.grid_visible = False
-        self.tray_container = None
+        self.tray_container: TrayContainer | None = None
+        self.install_location = os.getcwd()
 
         self.setWindowTitle("Grid Page")
         self.setMinimumSize(600, 600)
@@ -98,8 +101,13 @@ class GridController(QWidget):
         self.height_in_mm_input.setPlaceholderText("Height in mm")
         self.width_in_mm_input = QLineEdit()
         self.width_in_mm_input.setPlaceholderText("Width in mm")
+        self.depth_in_mm_input = QLineEdit()
+        self.depth_in_mm_input.setPlaceholderText("depth in mm")
+        self.depth_in_mm_input.textEdited.connect(self.update_generate_grid)
+
         input_layout.addWidget(self.height_in_mm_input)
         input_layout.addWidget(self.width_in_mm_input)
+        input_layout.addWidget(self.depth_in_mm_input)
         self.layout.addLayout(input_layout)
 
         self.toggle_button = QPushButton("Generate Grid")
@@ -117,6 +125,7 @@ class GridController(QWidget):
         self.generate_model_button = QPushButton("Generate model as STL")
         self.generate_model_button.setEnabled(False)
         self.generate_model_button.setVisible(False)
+        self.generate_model_button.clicked.connect(self.download_stl_to_folder_from_ui_grid)
         self.layout.addWidget(self.generate_model_button)
 
         self.setLayout(self.layout)
@@ -138,7 +147,6 @@ class GridController(QWidget):
                 width_in_mm = int(self.width_in_mm_input.text())
                 height_in_mm = int(self.height_in_mm_input.text())
                 self.tray_container = TrayContainer(width_in_mm, height_in_mm)
-                print(self.tray_container)
                 self.build_grid(self.tray_container.Y_Cells, self.tray_container.X_Cells)
 
                 self.toggle_button.setText("Clear Grid")
@@ -170,16 +178,18 @@ class GridController(QWidget):
         self.rectangles.clear()
         self.bounding_boxes.clear()
 
-    def all_cells_are_blue(self):
+    def are_all_cells_selected(self):
         total_cells = len(self.cells)
         selected_cells = sum(cell.selected for cell in self.cells.values())
-        print(total_cells, selected_cells, total_cells == selected_cells)
         return total_cells == selected_cells
 
-    def cell_clicked(self, cell):
-        if cell.selected and cell.rect_group:
-            return
+    def update_generate_grid(self):
+        if self.depth_in_mm_input.text().strip() != "" and self.are_all_cells_selected():
+            self.generate_model_button.setEnabled(True)
+        else:
+            self.generate_model_button.setEnabled(False)
 
+    def cell_clicked(self, cell):
         if cell.selected:
             self.selected_pair.append(cell)
 
@@ -190,10 +200,7 @@ class GridController(QWidget):
         if len(self.selected_pair) == 2:
             self.select_rectangle()
 
-        if self.all_cells_are_blue():
-            self.generate_model_button.setEnabled(True)
-        else:
-            self.generate_model_button.setEnabled(False)
+        self.update_generate_grid()
 
     def select_rectangle(self):
         c1, c2 = self.selected_pair
@@ -254,6 +261,17 @@ class GridController(QWidget):
         self.bounding_boxes = [info for info in self.bounding_boxes if info[:4] != (x1, y1, x2, y2)]
 
         self.generate_model_button.setEnabled(False)
+
+    def download_stl_to_folder_from_ui_grid(self):
+        # this is such a haltura
+        all_cell_rect_groups = [cell.rect_group for cell in self.cells.values()]
+        distnct_cell_groups = list(set(all_cell_rect_groups))
+        # this is in format Y1,X1,Y2,X2 because of what chatgpt did
+        tray_holes = [TrayHole(IndexPos(group[1],group[0]),IndexPos(group[3],group[2])) for group in distnct_cell_groups]
+        for tray_hole in tray_holes:
+            self.tray_container.add_hole(tray_hole)
+
+        print(self.tray_container.tray_holes)
 
 
 if __name__ == "__main__":
