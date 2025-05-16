@@ -10,8 +10,6 @@ class TrayContainer():
     def __init__(self, width_in_mm: float, length_in_mm: float):
         self.width_mm: float = width_in_mm
         self.length_mm: float = length_in_mm
-        # self.half_wall_thickness_mm: float = wall_thickness_in_mm
-        # self.holes_fillet_radius_mm: float = tray_hole_fillet_radius_mm
         self.X_Cells, self.Y_Cells = self.calculate_cell_matrix(width_in_mm, length_in_mm)
 
     def calculate_cell_matrix(self, width_in_mm: float, length_in_mm: float):

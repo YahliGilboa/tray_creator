@@ -52,9 +52,8 @@ class GridCell(QLabel):
         if event.button() == Qt.LeftButton:
             self.controller.cell_clicked(self)
 
-    def mouseDoubleClickEvent(self, event):
-        if event.button() == Qt.LeftButton:
-            self.controller.cell_double_clicked(self)
+        if event.button() == Qt.RightButton:
+            self.controller.delete_cell_group(self)
 
     def select(self):
         self.selected = True
@@ -115,21 +114,37 @@ class GridController(QWidget):
         self.grid_container.setLayout(self.grid_layout)
         self.layout.addWidget(self.grid_container)
 
+        self.generate_model_button = QPushButton("Generate model as STL")
+        self.generate_model_button.setEnabled(False)
+        self.generate_model_button.setVisible(False)
+        self.layout.addWidget(self.generate_model_button)
+
         self.setLayout(self.layout)
 
     def toggle_grid(self):
         if self.grid_visible:
             self.tray_container = None
+
             self.clear_grid()
+
             self.toggle_button.setText("Generate Grid")
+
+            self.generate_model_button.setEnabled(False)
+            self.generate_model_button.setVisible(False)
+
             self.grid_visible = False
         else:
             try:
-                width_in_mm = int(self.cols_input.text())
-                height_in_mm = int(self.rows_input.text())
-                self.tray_container = TrayContainer(width_in_mm,height_in_mm)
-                self.build_grid(rows, cols)
+                width_in_mm = int(self.width_in_mm_input.text())
+                height_in_mm = int(self.height_in_mm_input.text())
+                self.tray_container = TrayContainer(width_in_mm, height_in_mm)
+                print(self.tray_container)
+                self.build_grid(self.tray_container.Y_Cells, self.tray_container.X_Cells)
+
                 self.toggle_button.setText("Clear Grid")
+
+                self.generate_model_button.setVisible(True)
+
                 self.grid_visible = True
             except ValueError:
                 pass
@@ -155,16 +170,30 @@ class GridController(QWidget):
         self.rectangles.clear()
         self.bounding_boxes.clear()
 
+    def all_cells_are_blue(self):
+        total_cells = len(self.cells)
+        selected_cells = sum(cell.selected for cell in self.cells.values())
+        print(total_cells, selected_cells, total_cells == selected_cells)
+        return total_cells == selected_cells
+
     def cell_clicked(self, cell):
         if cell.selected and cell.rect_group:
             return
 
-        if not cell.selected:
+        if cell.selected:
+            self.selected_pair.append(cell)
+
+        else:
             self.selected_pair.append(cell)
             cell.select()
 
         if len(self.selected_pair) == 2:
             self.select_rectangle()
+
+        if self.all_cells_are_blue():
+            self.generate_model_button.setEnabled(True)
+        else:
+            self.generate_model_button.setEnabled(False)
 
     def select_rectangle(self):
         c1, c2 = self.selected_pair
@@ -208,7 +237,7 @@ class GridController(QWidget):
         box.show()
         self.bounding_boxes.append((x1, y1, x2, y2, box))
 
-    def cell_double_clicked(self, cell):
+    def delete_cell_group(self, cell):
         if not cell.rect_group:
             return
 
@@ -223,6 +252,8 @@ class GridController(QWidget):
             if info[:4] == (x1, y1, x2, y2):
                 info[4].deleteLater()
         self.bounding_boxes = [info for info in self.bounding_boxes if info[:4] != (x1, y1, x2, y2)]
+
+        self.generate_model_button.setEnabled(False)
 
 
 if __name__ == "__main__":
