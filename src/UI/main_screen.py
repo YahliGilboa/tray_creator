@@ -1,10 +1,14 @@
-from PySide6.QtWidgets import QApplication, QWidget, QLabel, QGridLayout, QVBoxLayout, QPushButton, QLineEdit, QHBoxLayout, QFrame, QSpacerItem, QSizePolicy
+from PySide6.QtWidgets import QApplication, QWidget, QLabel, QGridLayout, QVBoxLayout, QPushButton, QLineEdit, \
+    QHBoxLayout, QFrame, QSpacerItem, QSizePolicy
 from PySide6.QtCore import Qt, QTimer, QPoint
 from PySide6.QtGui import QColor, QPalette
 import sys
 
+from tray_logic.traycontainer import TrayContainer
+
 CELL_SIZE = 40
 CELL_SPACING = 5  # Constant spacing
+
 
 class GridCell(QLabel):
     def __init__(self, row, col, controller):
@@ -61,12 +65,14 @@ class GridCell(QLabel):
         self.rect_group = None
         self.set_default_color()
 
+
 class BoundingBox(QFrame):
     def __init__(self, x1, y1, x2, y2):
         super().__init__()
         self.setStyleSheet("border: 2px solid black;")
         self.setAttribute(Qt.WA_TransparentForMouseEvents)
         self.x1, self.y1, self.x2, self.y2 = x1, y1, x2, y2
+
 
 class GridController(QWidget):
     def __init__(self):
@@ -76,6 +82,7 @@ class GridController(QWidget):
         self.rectangles = []
         self.bounding_boxes = []
         self.grid_visible = False
+        self.tray_container = None
 
         self.setWindowTitle("Grid Page")
         self.setMinimumSize(600, 600)
@@ -88,12 +95,12 @@ class GridController(QWidget):
         self.layout.addWidget(self.title_label)
 
         input_layout = QHBoxLayout()
-        self.rows_input = QLineEdit()
-        self.rows_input.setPlaceholderText("Rows")
-        self.cols_input = QLineEdit()
-        self.cols_input.setPlaceholderText("Cols")
-        input_layout.addWidget(self.rows_input)
-        input_layout.addWidget(self.cols_input)
+        self.height_in_mm_input = QLineEdit()
+        self.height_in_mm_input.setPlaceholderText("Height in mm")
+        self.width_in_mm_input = QLineEdit()
+        self.width_in_mm_input.setPlaceholderText("Width in mm")
+        input_layout.addWidget(self.height_in_mm_input)
+        input_layout.addWidget(self.width_in_mm_input)
         self.layout.addLayout(input_layout)
 
         self.toggle_button = QPushButton("Generate Grid")
@@ -112,13 +119,15 @@ class GridController(QWidget):
 
     def toggle_grid(self):
         if self.grid_visible:
+            self.tray_container = None
             self.clear_grid()
             self.toggle_button.setText("Generate Grid")
             self.grid_visible = False
         else:
             try:
-                rows = int(self.rows_input.text())
-                cols = int(self.cols_input.text())
+                width_in_mm = int(self.cols_input.text())
+                height_in_mm = int(self.rows_input.text())
+                self.tray_container = TrayContainer(width_in_mm,height_in_mm)
                 self.build_grid(rows, cols)
                 self.toggle_button.setText("Clear Grid")
                 self.grid_visible = True
@@ -214,6 +223,7 @@ class GridController(QWidget):
             if info[:4] == (x1, y1, x2, y2):
                 info[4].deleteLater()
         self.bounding_boxes = [info for info in self.bounding_boxes if info[:4] != (x1, y1, x2, y2)]
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

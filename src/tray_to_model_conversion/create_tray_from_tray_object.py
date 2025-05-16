@@ -1,20 +1,26 @@
 import cadquery as cq
 from src.tray_logic.traycontainer import TrayContainer
 from src.tray_logic.TrayHole import TrayHole
+import src.tray_logic.conf as conf
 
 
 class trayToModelConverter():
-    def __init__(self, tray_container: TrayContainer):
-        self.tray_container = tray_container
-        self.single_cell_span_mm = ((tray_container.width_mm - 2 * self.tray_container.half_wall_thickness_mm) /
+    def __init__(self, tray_container: TrayContainer, height_in_mm: float = conf.DEFAULT_TRAY_HEIGHT_MM,
+                 wall_thickness_in_mm: float = conf.DEFAULT_TRAY_HALF_WALL_THICKNESS_MM,
+                 tray_hole_fillet_radius_mm: float = conf.DEFAULT_TRAY_FILLET_RADIUS_MM):
+        self.tray_container: TrayContainer = tray_container
+        self.height_mm: float = height_in_mm
+        self.half_wall_thickness_mm: float = wall_thickness_in_mm
+        self.holes_fillet_radius_mm: float = tray_hole_fillet_radius_mm
+        self.single_cell_span_mm = ((tray_container.width_mm - 2 * self.half_wall_thickness_mm) /
                                     tray_container.X_Cells)
-        self.outer_radii = self.tray_container.holes_fillet_radius_mm + self.tray_container.half_wall_thickness_mm * 2
+        self.outer_radii = self.holes_fillet_radius_mm + self.half_wall_thickness_mm * 2
 
     # y is negative because of how axis are aligned
     def get_tray_hole_size_dimensions_mm(self, tray_hole: TrayHole) -> tuple:
         tray_hole_span_width = self.single_cell_span_mm * tray_hole.x_cells_span
         tray_hole_span_length = self.single_cell_span_mm * tray_hole.y_cells_span
-        wall_thickness = 2 * self.tray_container.half_wall_thickness_mm
+        wall_thickness = 2 * self.half_wall_thickness_mm
         if tray_hole_span_width < wall_thickness or tray_hole_span_length < wall_thickness:
             raise Exception("hole span (chosen grid span) cant be smaller than twice wall thickness")
 
@@ -34,14 +40,14 @@ class trayToModelConverter():
 
     def create_model_from_tray_object(self):
         tray_model = cq.Workplane("XY") \
-            .box(self.tray_container.width_mm, self.tray_container.length_mm, self.tray_container.height_mm) \
+            .box(self.tray_container.width_mm, self.tray_container.length_mm, self.height_mm) \
             .edges("|Z") \
             .fillet(self.outer_radii)
 
         topleft_workplane = cq.Workplane("XY") \
-            .transformed(offset=(0, 0, self.tray_container.height_mm / 2)) \
+            .transformed(offset=(0, 0, self.height_mm / 2)) \
             .center(-self.tray_container.width_mm / 2, self.tray_container.length_mm / 2) \
-            .center(self.tray_container.half_wall_thickness_mm, -self.tray_container.half_wall_thickness_mm)
+            .center(self.half_wall_thickness_mm, -self.half_wall_thickness_mm)
         # above is to complete first wall's thickness to full thickness and allow pattern of halfs to happen
 
         for tray_hole in self.tray_container.tray_holes:
@@ -50,9 +56,9 @@ class trayToModelConverter():
                 .sketch() \
                 .rect(*self.get_tray_hole_size_dimensions_mm(tray_hole)) \
                 .vertices() \
-                .fillet(self.tray_container.holes_fillet_radius_mm) \
+                .fillet(self.holes_fillet_radius_mm) \
                 .finalize() \
-                .extrude(-(self.tray_container.height_mm - self.tray_container.half_wall_thickness_mm))
+                .extrude(-(self.height_mm - self.half_wall_thickness_mm))
 
             tray_model = tray_model.cut(new_rect)
 
