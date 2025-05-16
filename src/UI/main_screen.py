@@ -1,57 +1,222 @@
-from tkinter import *
-from tkinter.ttk import *
+from PySide6.QtWidgets import QApplication, QWidget, QLabel, QGridLayout, QVBoxLayout, QPushButton, QLineEdit, QHBoxLayout, QFrame, QSpacerItem, QSizePolicy
+from PySide6.QtCore import Qt, QTimer, QPoint
+from PySide6.QtGui import QColor, QPalette
+import sys
 
-# Constants for window size
-WINDOW_WIDTH = 700
-WINDOW_HEIGHT = 500
+CELL_SIZE = 40
+CELL_SPACING = 5  # Constant spacing
 
-# Create the main Tkinter window
-master = Tk()
-master.geometry(f"{WINDOW_WIDTH}x{WINDOW_HEIGHT}")
+class GridCell(QLabel):
+    def __init__(self, row, col, controller):
+        super().__init__()
+        self.row = row
+        self.col = col
+        self.controller = controller
+        self.selected = False
+        self.rect_group = None
 
-# Configure the grid layout to expand properly
-master.grid_columnconfigure(0, weight=1)
-master.grid_columnconfigure(1, weight=1)
+        self.setFixedSize(CELL_SIZE, CELL_SIZE)
+        self.setAutoFillBackground(True)
+        self.set_default_color()
+        self.setFrameStyle(QLabel.Box | QLabel.Plain)
+        self.setLineWidth(1)
 
-# Create and place the header label
-main_header = Label(
-    master,
-    text="Please enter the desired height\nand width of your tray",
-    font=("Sans", 22, "bold"),
-    justify="center",
-    anchor="center"
-)
-main_header.grid(row=0, column=0, columnspan=2, sticky="nsew")
+    def set_default_color(self):
+        palette = self.palette()
+        palette.setColor(QPalette.Window, QColor("white"))
+        self.setPalette(palette)
 
-# Create and place the Entry widgets for height and width
-width_prompt = Entry(master)
-width_prompt.insert(0,"enter width in mm")
-height_prompt = Entry(master)
-height_prompt.insert(0,"enter height in mm")
+    def set_hover_color(self):
+        palette = self.palette()
+        palette.setColor(QPalette.Window, QColor("cyan"))
+        self.setPalette(palette)
 
-width_prompt.grid(row=1, column=0, padx=10, pady=10, sticky="e")
-height_prompt.grid(row=1, column=1, padx=10, pady=10, sticky="w")
+    def set_selected_color(self):
+        palette = self.palette()
+        palette.setColor(QPalette.Window, QColor("blue"))
+        self.setPalette(palette)
 
-# master.grid_columnconfigure(0, weight=1)
-# master.grid_columnconfigure(1, weight=1)
-# width_prompt.grid(row=1,column=0)
-# height_prompt.grid(row=1,column=1)
+    def enterEvent(self, event):
+        if not self.selected:
+            self.set_hover_color()
 
+    def leaveEvent(self, event):
+        if not self.selected:
+            self.set_default_color()
 
-#
-# # this will create a label widget
-# b1 = Button(text="bruh")
-# b2 = Button(text="bruh")
-# b3 = Button(text="bruh")
-# b4 = Button(text="bruh")
-#
-# b1.grid(row=0,column=0)
-# b2.grid(row=0,column=1)
-# b3.grid(row=1,column=0)
-# b4.grid(row=1,column=1)
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self.controller.cell_clicked(self)
 
+    def mouseDoubleClickEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self.controller.cell_double_clicked(self)
 
+    def select(self):
+        self.selected = True
+        self.set_selected_color()
 
-# infinite loop which can be terminated by keyboard
-# or mouse interrupt
-master.mainloop()
+    def deselect(self):
+        self.selected = False
+        self.rect_group = None
+        self.set_default_color()
+
+class BoundingBox(QFrame):
+    def __init__(self, x1, y1, x2, y2):
+        super().__init__()
+        self.setStyleSheet("border: 2px solid black;")
+        self.setAttribute(Qt.WA_TransparentForMouseEvents)
+        self.x1, self.y1, self.x2, self.y2 = x1, y1, x2, y2
+
+class GridController(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.cells = {}
+        self.selected_pair = []
+        self.rectangles = []
+        self.bounding_boxes = []
+        self.grid_visible = False
+
+        self.setWindowTitle("Grid Page")
+        self.setMinimumSize(600, 600)
+
+        self.layout = QVBoxLayout()
+
+        self.title_label = QLabel("Grid Creator")
+        self.title_label.setAlignment(Qt.AlignCenter)
+        self.title_label.setStyleSheet("font-size: 24px; font-weight: bold;")
+        self.layout.addWidget(self.title_label)
+
+        input_layout = QHBoxLayout()
+        self.rows_input = QLineEdit()
+        self.rows_input.setPlaceholderText("Rows")
+        self.cols_input = QLineEdit()
+        self.cols_input.setPlaceholderText("Cols")
+        input_layout.addWidget(self.rows_input)
+        input_layout.addWidget(self.cols_input)
+        self.layout.addLayout(input_layout)
+
+        self.toggle_button = QPushButton("Generate Grid")
+        self.toggle_button.setCheckable(True)
+        self.toggle_button.clicked.connect(self.toggle_grid)
+        self.layout.addWidget(self.toggle_button)
+
+        self.grid_container = QWidget()
+        self.grid_layout = QGridLayout()
+        self.grid_layout.setSpacing(CELL_SPACING)
+        self.grid_layout.setAlignment(Qt.AlignTop | Qt.AlignHCenter)
+        self.grid_container.setLayout(self.grid_layout)
+        self.layout.addWidget(self.grid_container)
+
+        self.setLayout(self.layout)
+
+    def toggle_grid(self):
+        if self.grid_visible:
+            self.clear_grid()
+            self.toggle_button.setText("Generate Grid")
+            self.grid_visible = False
+        else:
+            try:
+                rows = int(self.rows_input.text())
+                cols = int(self.cols_input.text())
+                self.build_grid(rows, cols)
+                self.toggle_button.setText("Clear Grid")
+                self.grid_visible = True
+            except ValueError:
+                pass
+
+    def build_grid(self, rows, cols):
+        self.cells = {}
+        for i in range(rows):
+            for j in range(cols):
+                cell = GridCell(i, j, self)
+                self.grid_layout.addWidget(cell, i, j)
+                self.cells[(i, j)] = cell
+
+    def clear_grid(self):
+        while self.grid_layout.count():
+            item = self.grid_layout.takeAt(0)
+            widget = item.widget()
+            if widget:
+                widget.deleteLater()
+        for _, _, _, _, box in self.bounding_boxes:
+            box.deleteLater()
+        self.cells.clear()
+        self.selected_pair.clear()
+        self.rectangles.clear()
+        self.bounding_boxes.clear()
+
+    def cell_clicked(self, cell):
+        if cell.selected and cell.rect_group:
+            return
+
+        if not cell.selected:
+            self.selected_pair.append(cell)
+            cell.select()
+
+        if len(self.selected_pair) == 2:
+            self.select_rectangle()
+
+    def select_rectangle(self):
+        c1, c2 = self.selected_pair
+        x1, y1 = min(c1.row, c2.row), min(c1.col, c2.col)
+        x2, y2 = max(c1.row, c2.row), max(c1.col, c2.col)
+
+        for i in range(x1, x2 + 1):
+            for j in range(y1, y2 + 1):
+                if self.cells[(i, j)].rect_group is not None:
+                    self.selected_pair.clear()
+                    return
+
+        rect = []
+        for i in range(x1, x2 + 1):
+            for j in range(y1, y2 + 1):
+                cell = self.cells[(i, j)]
+                cell.select()
+                cell.rect_group = (x1, y1, x2, y2)
+                rect.append(cell)
+
+        self.rectangles.append(rect)
+        QTimer.singleShot(0, lambda: self.draw_bounding_box(x1, y1, x2, y2))
+        self.selected_pair.clear()
+
+    def draw_bounding_box(self, x1, y1, x2, y2):
+        top_left = self.grid_layout.itemAtPosition(x1, y1).widget()
+        bottom_right = self.grid_layout.itemAtPosition(x2, y2).widget()
+
+        # Convert local position of top-left and bottom-right cells to global in container
+        top_left_pos = top_left.mapTo(self, top_left.rect().topLeft())
+        bottom_right_pos = bottom_right.mapTo(self, bottom_right.rect().bottomRight())
+
+        x = top_left_pos.x()
+        y = top_left_pos.y()
+        w = bottom_right_pos.x() - x + 1
+        h = bottom_right_pos.y() - y + 1
+
+        box = BoundingBox(x1, y1, x2, y2)
+        box.setParent(self)
+        box.setGeometry(x, y, w, h)
+        box.show()
+        self.bounding_boxes.append((x1, y1, x2, y2, box))
+
+    def cell_double_clicked(self, cell):
+        if not cell.rect_group:
+            return
+
+        x1, y1, x2, y2 = cell.rect_group
+        for i in range(x1, x2 + 1):
+            for j in range(y1, y2 + 1):
+                self.cells[(i, j)].deselect()
+
+        self.rectangles = [r for r in self.rectangles if cell not in r]
+
+        for info in self.bounding_boxes:
+            if info[:4] == (x1, y1, x2, y2):
+                info[4].deleteLater()
+        self.bounding_boxes = [info for info in self.bounding_boxes if info[:4] != (x1, y1, x2, y2)]
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    window = GridController()
+    window.show()
+    sys.exit(app.exec())
